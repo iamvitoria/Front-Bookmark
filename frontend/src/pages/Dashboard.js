@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import LinkList from "../components/LinkList";
+import api from "../api";
 
 export default function Dashboard({ nomeUsuario, onLogout }) {
   const [links, setLinks] = useState([]);
@@ -15,11 +16,12 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [editingLink, setEditingLink] = useState(null);
 
   const user_id = localStorage.getItem("user_id");
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (!user_id) return;
 
-    fetch(`http://localhost:5000/bookmarks?user_id=${user_id}`)
+    fetch(`${API_URL}/bookmarks?user_id=${user_id}`)
       .then((res) => res.json())
       .then((data) => {
         const formattedLinks = data.map((link) => ({
@@ -55,7 +57,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/bookmarks", {
+      const res = await fetch(`${API_URL}/bookmarks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLinkData),
@@ -92,9 +94,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   async function salvarEdicao(e) {
     e.preventDefault();
 
-    const res = await fetch(
-      `http://localhost:5000/bookmarks/${editingLink.id}`,
-      {
+    const res = await fetch(`${API_URL}/bookmarks/${editingLink.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -123,7 +123,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     if (!window.confirm("Deseja realmente excluir esse link?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/bookmarks/${id}`, {
+      const res = await fetch(`${API_URL}/bookmarks/${id}`, {
         method: "DELETE",
       });
 
