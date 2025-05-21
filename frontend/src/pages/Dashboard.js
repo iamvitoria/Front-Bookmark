@@ -17,6 +17,18 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const user_id = localStorage.getItem("user_id");
   const API_URL = process.env.REACT_APP_API_URL;
 
+  // Função declarada antes do return
+  const handleCreateFolder = (folderName) => {
+    fetch('/api/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: folderName, user_id: user_id }) // use user_id direto aqui
+    })
+      .then(res => res.json())
+      .then(data => console.log('Pasta criada:', data))
+      .catch(err => console.error('Erro ao criar pasta:', err));
+  };
+
   useEffect(() => {
     if (!user_id) return;
 
@@ -144,7 +156,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         onLogout={onLogout}
       />
       <div style={styles.main}>
-        <Sidebar favorites={favorites} />
+        <Sidebar favorites={favorites} onCreateFolder={handleCreateFolder} />
 
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>

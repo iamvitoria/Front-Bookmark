@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function Sidebar({ favorites }) {
+export default function Sidebar({ favorites, onCreateFolder }) {
+  const [folderName, setFolderName] = useState('');
+
+  const handleCreateFolder = () => {
+    if (folderName.trim() === '') return;
+    onCreateFolder(folderName);
+    setFolderName('');  // limpa o campo após criar
+  };
+
   return (
     <aside style={styles.sidebar}>
       <h3>Favoritos</h3>
+
+      <div style={styles.folderForm}>
+        <input
+          type="text"
+          placeholder="Nova pasta"
+          value={folderName}
+          onChange={(e) => setFolderName(e.target.value)}
+          style={styles.input}
+        />
+        <button onClick={handleCreateFolder} style={styles.button}>
+          Criar
+        </button>
+      </div>
+
       <ul style={styles.list}>
         {favorites.length === 0 && <li style={{ color: '#999' }}>Nenhum favorito</li>}
         {favorites.map(link => (
@@ -22,14 +44,33 @@ const styles = {
     background: '#f4f6f8',
     padding: '20px',
     borderRight: '1px solid #ddd',
-    height: 'calc(100vh - 60px)', // considerando header fixo 60px
+    height: 'calc(100vh - 60px)',
     overflowY: 'auto'
+  },
+  folderForm: {
+    display: 'flex',
+    marginBottom: '15px',
+    gap: '5px'
+  },
+  input: {
+    flex: 1,
+    padding: '5px',
+    border: '1px solid #ccc',
+    borderRadius: '4px'
+  },
+  button: {
+    padding: '6px 10px',
+    backgroundColor: '#2c3e50',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
   },
   list: {
     listStyle: 'none',
-    paddingLeft: 0,
+    paddingLeft: 0
   },
   item: {
-    marginBottom: '12px',
+    marginBottom: '12px'
   }
 };
