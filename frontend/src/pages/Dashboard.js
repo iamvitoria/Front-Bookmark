@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import LinkList from "../components/LinkList";
-import api from "../api";
 
 export default function Dashboard({ nomeUsuario, onLogout }) {
   const [links, setLinks] = useState([]);
@@ -35,8 +34,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch((err) => {
         console.error("Erro ao carregar links:", err);
       });
-  }, [user_id]);
+  });
 
+  //filtro de busca
   const filteredLinks = links.filter(
     (link) =>
       link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase())
