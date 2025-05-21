@@ -46,7 +46,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch((err) => {
         console.error("Erro ao carregar links:", err);
       });
-  });
+  }, [user_id, API_URL]); 
 
   //filtro de busca
   const filteredLinks = links.filter(
@@ -146,7 +146,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     } catch (error) {
       alert(error.message);
     }
-  };
+  }
 
   return (
     <div style={styles.container}>
@@ -157,7 +157,6 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       />
       <div style={styles.main}>
         <Sidebar favorites={favorites} onCreateFolder={handleCreateFolder} />
-
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
             <input
