@@ -15,11 +15,11 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [editingLink, setEditingLink] = useState(null);
 
   const user_id = localStorage.getItem("user_id");
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
   // Função declarada antes do return
   const handleCreateFolder = (folderName) => {
-    fetch('/api/folders', {
+    fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: folderName, user_id: user_id }) // use user_id direto aqui
