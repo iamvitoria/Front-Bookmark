@@ -17,15 +17,35 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const user_id = localStorage.getItem("user_id");
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
-  // Função declarada antes do return
   const handleCreateFolder = (folderName) => {
+    console.log("user_id disponível:", user_id);
+    
+    if (!folderName) {
+      console.error("Nome da pasta é obrigatório!");
+      return;
+    }
+
+    const payload = {
+      nome: folderName,
+      user_id: parseInt(user_id),  // importante!
+    };
+
+    console.log("Payload para criar pasta:", payload);
+
     fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: folderName, user_id: user_id }) // use user_id direto aqui
+      body: JSON.stringify(payload),
     })
-      .then(res => res.json())
-      .then(data => console.log('Pasta criada:', data))
+      .then(res => res.json().catch(() => ({ erro: 'Resposta não é JSON' })))
+      .then(data => {
+        console.log('Resposta ao criar pasta:', data);
+        if (data.erro) {
+          alert(`Erro ao criar pasta: ${data.erro}`);
+        } else {
+          console.log('Pasta criada:', data);
+        }
+      })
       .catch(err => console.error('Erro ao criar pasta:', err));
   };
 
