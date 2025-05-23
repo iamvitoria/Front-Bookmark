@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 
 function RegisterForm({ onRegister }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setErro("");
+    setSucesso("");
+    setIsLoading(true);
 
     try {
       const API_URL = process.env.REACT_APP_API_URL;
+
       const response = await fetch(`${API_URL}/usuarios`, {
         method: "POST",
         headers: {
@@ -25,17 +32,19 @@ function RegisterForm({ onRegister }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Usuário cadastrado com sucesso!");
+        setSucesso("Usuário cadastrado com sucesso!");
         setNome('');
         setEmail('');
         setSenha('');
-        if (onRegister) onRegister(); // opcional, para alternar aba
+        if (onRegister) onRegister(); 
       } else {
-        alert(`Erro: ${data.erro || 'Erro desconhecido'}`);
+        setErro(data.erro || 'Erro desconhecido');
       }
     } catch (err) {
       console.error(err);
-      alert("Erro ao conectar com o servidor.");
+      setErro("Erro ao conectar com o servidor.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -65,7 +74,13 @@ function RegisterForm({ onRegister }) {
         onChange={(e) => setSenha(e.target.value)}
         required
       />
-      <button type="submit" style={styles.button}>Cadastrar</button>
+
+      {erro && <span style={styles.erro}>{erro}</span>}
+      {sucesso && <span style={styles.sucesso}>{sucesso}</span>}
+
+      <button type="submit" style={styles.button} disabled={isLoading}>
+        {isLoading ? "Carregando..." : "Cadastrar"}
+      </button>
     </form>
   );
 }
@@ -90,7 +105,18 @@ const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     border: 'none',
-    transition: 'background 0.3s'
+    transition: 'background 0.3s',
+    opacity: 1,
+  },
+  erro: {
+    color: "red",
+    fontSize: "14px",
+  },
+  sucesso: {
+    marginTop: "10px",
+    textAlign: "center",
+    fontSize: "14px",
+    color: "#2c3e50",    
   }
 };
 

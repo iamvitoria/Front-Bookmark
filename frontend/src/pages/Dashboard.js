@@ -7,6 +7,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [links, setLinks] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [erro, setErro] = useState("");
 
   const [newTitle, setNewTitle] = useState("");
   const [newUrl, setNewUrl] = useState("");
@@ -14,12 +17,15 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   const [editingLink, setEditingLink] = useState(null);
 
+  const [deletingId, setDeletingId] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
   const user_id = localStorage.getItem("user_id");
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
   const handleCreateFolder = (folderName) => {
     console.log("user_id disponível:", user_id);
-    
     if (!folderName) {
       console.error("Nome da pasta é obrigatório!");
       return;
@@ -27,7 +33,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
     const payload = {
       nome: folderName,
-      user_id: parseInt(user_id),  // importante!
+      user_id: parseInt(user_id),
     };
 
     console.log("Payload para criar pasta:", payload);
@@ -66,9 +72,8 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch((err) => {
         console.error("Erro ao carregar links:", err);
       });
-  }, [user_id, API_URL]); 
+  }, [user_id, API_URL]);
 
-  //filtro de busca
   const filteredLinks = links.filter(
     (link) =>
       link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,8 +81,12 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   const handleAddLink = async (e) => {
     e.preventDefault();
+    setErro("");
+    setIsLoading(true);
+
     if (!newTitle || !newUrl) {
       alert("Título e URL são obrigatórios!");
+      setIsLoading(false);
       return;
     }
 
@@ -112,6 +121,8 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       setNewDescription("");
     } catch (error) {
       alert(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -125,17 +136,18 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   async function salvarEdicao(e) {
     e.preventDefault();
+    setErro("");
+    setIsSaving(true);
 
     const res = await fetch(`${API_URL}/bookmarks/${editingLink.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo: editingLink.titulo,
-          url: editingLink.url,
-          descricao: editingLink.descricao,
-        }),
-      }
-    );
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        titulo: editingLink.titulo,
+        url: editingLink.url,
+        descricao: editingLink.descricao,
+      }),
+    });
 
     if (res.ok) {
       const updated = {
@@ -149,11 +161,11 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     } else {
       alert("Erro ao editar");
     }
+    setIsSaving(false);
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Deseja realmente excluir esse link?")) return;
-
+    setDeletingId(id);
     try {
       const res = await fetch(`${API_URL}/bookmarks/${id}`, {
         method: "DELETE",
@@ -165,8 +177,17 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       setFavorites((current) => current.filter((fav) => fav.id !== id));
     } catch (error) {
       alert(error.message);
+    } finally {
+      setDeletingId(null);
+      setShowConfirm(false);
+      setConfirmDeleteId(null);
     }
-  }
+  };
+
+  const confirmDelete = (id) => {
+    setConfirmDeleteId(id);
+    setShowConfirm(true);
+  };
 
   return (
     <div style={styles.container}>
@@ -202,8 +223,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
               onChange={(e) => setNewDescription(e.target.value)}
               style={styles.input}
             />
-            <button type="submit" style={styles.button}>
-              Adicionar Link
+            {erro && <span style={styles.erro}>{erro}</span>}
+            <button type="submit" style={styles.button} disabled={isLoading}>
+              {isLoading ? "Adicionando..." : "Adicionar Link"}
             </button>
           </form>
 
@@ -247,8 +269,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
                 }
                 style={styles.input}
               />
-              <button type="submit" style={styles.button}>
-                Salvar
+              {erro && <span style={styles.erro}>{erro}</span>}
+              <button type="submit" style={styles.button} disabled={isSaving}>
+                {isSaving ? "Salvando..." : "Salvar"}
               </button>
               <button
                 type="button"
@@ -260,10 +283,35 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
             </form>
           )}
 
+          {showConfirm && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modal}>
+                <p>Tem certeza que deseja excluir este link?</p>
+                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                  <button
+                    onClick={() => handleDelete(confirmDeleteId)}
+                    style={{ ...styles.button, backgroundColor: "red" }}
+                  >
+                    {deletingId === confirmDeleteId ? "Excluindo..." : "Sim, excluir"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowConfirm(false);
+                      setConfirmDeleteId(null);
+                    }}
+                    style={{ ...styles.button, backgroundColor: "gray" }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <LinkList
             links={filteredLinks}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={confirmDelete}
             grid
           />
         </main>
@@ -304,5 +352,29 @@ const styles = {
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "bold",
+  },
+  erro: {
+    color: "2c3e50",
+    fontSize: "12px",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  modal: {
+    background: "#fff",
+    padding: "20px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    minWidth: "300px",
+    textAlign: "center",
   },
 };

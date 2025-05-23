@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 function LoginForm({ onLogin }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -8,6 +9,7 @@ function LoginForm({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro("");
+    setIsLoading(true);
 
     try {
       const API_URL = process.env.REACT_APP_API_URL;
@@ -34,6 +36,8 @@ function LoginForm({ onLogin }) {
     } catch (error) {
       console.error("Erro na requisição:", error);
       setErro("Erro ao conectar ao servidor");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,8 +60,9 @@ function LoginForm({ onLogin }) {
         style={styles.input}
       />
       {erro && <span style={styles.erro}>{erro}</span>}
-      <button type="submit" style={styles.button}>
-        Entrar
+      
+      <button type="submit" style={styles.button} disabled={isLoading}>
+        {isLoading ? "Carregando..." : "Entrar"}
       </button>
     </form>
   );
@@ -84,10 +89,17 @@ const styles = {
     cursor: "pointer",
     border: "none",
     transition: "background 0.3s",
+    opacity: 1,
   },
   erro: {
     color: "red",
     fontSize: "14px",
+  },
+  loader: {
+    marginTop: "10px",
+    textAlign: "center",
+    fontSize: "14px",
+    color: "#2c3e50",
   },
 };
 
