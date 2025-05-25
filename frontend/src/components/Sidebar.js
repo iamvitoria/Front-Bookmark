@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
-export default function Sidebar({ favorites, onCreateFolder }) {
+export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFolder }) {
   const [folderName, setFolderName] = useState('');
 
   const handleCreateFolder = () => {
     if (folderName.trim() === '') return;
     onCreateFolder(folderName);
-    setFolderName('');  // limpa o campo após criar
+    setFolderName('');
   };
 
   return (
@@ -26,6 +26,24 @@ export default function Sidebar({ favorites, onCreateFolder }) {
         </button>
       </div>
 
+      <h4>Pastas</h4>
+      <ul style={styles.list}>
+        {folders && folders.length > 0 ? (
+          folders.map(folder => (
+            <li 
+              key={folder.id} 
+              style={{ ...styles.item, cursor: 'pointer', color: '#2c3e50' }} 
+              onClick={() => onSelectFolder(folder.id)}
+            >
+              {folder.nome}
+            </li>
+          ))
+        ) : (
+          <li style={{ color: '#999' }}>Nenhuma pasta</li>
+        )}
+      </ul>
+
+      <h4>Links salvos</h4>
       <ul style={styles.list}>
         {favorites.length === 0 && <li style={{ color: '#999' }}>Nenhum favorito</li>}
         {favorites.map(link => (
@@ -68,7 +86,8 @@ const styles = {
   },
   list: {
     listStyle: 'none',
-    paddingLeft: 0
+    paddingLeft: 0,
+    marginTop: '10px'
   },
   item: {
     marginBottom: '12px'

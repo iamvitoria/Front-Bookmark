@@ -16,28 +16,25 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [newDescription, setNewDescription] = useState("");
 
   const [editingLink, setEditingLink] = useState(null);
-
   const [deletingId, setDeletingId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [folders, setFolders] = useState([]);
 
   const user_id = localStorage.getItem("user_id");
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
   const handleCreateFolder = (folderName) => {
-    console.log("user_id disponível:", user_id);
     if (!folderName) {
       console.error("Nome da pasta é obrigatório!");
       return;
     }
-
     const payload = {
       nome: folderName,
       user_id: parseInt(user_id),
     };
-
-    console.log("Payload para criar pasta:", payload);
-
     fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -45,11 +42,10 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     })
       .then(res => res.json().catch(() => ({ erro: 'Resposta não é JSON' })))
       .then(data => {
-        console.log('Resposta ao criar pasta:', data);
         if (data.erro) {
           alert(`Erro ao criar pasta: ${data.erro}`);
         } else {
-          console.log('Pasta criada:', data);
+          setFolders(prev => [...prev, { id: data.id, nome: folderName }]);
         }
       })
       .catch(err => console.error('Erro ao criar pasta:', err));
@@ -58,7 +54,21 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   useEffect(() => {
     if (!user_id) return;
 
-    fetch(`${API_URL}/bookmarks?user_id=${user_id}`)
+    fetch(`${API_URL}/folders?user_id=${user_id}`)
+      .then(res => res.json())
+      .then(data => setFolders(data))
+      .catch(err => console.error('Erro ao carregar pastas:', err));
+  }, [user_id, API_URL]);
+
+  useEffect(() => {
+    if (!user_id) return;
+
+    let url = `${API_URL}/bookmarks?user_id=${user_id}`;
+    if (selectedFolder) {
+      url += `&folder_id=${selectedFolder}`;
+    }
+
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         const formattedLinks = data.map((link) => ({
@@ -72,11 +82,10 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch((err) => {
         console.error("Erro ao carregar links:", err);
       });
-  }, [user_id, API_URL]);
+  }, [user_id, API_URL, selectedFolder]);
 
   const filteredLinks = links.filter(
-    (link) =>
-      link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase())
+    (link) => link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddLink = async (e) => {
@@ -95,6 +104,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       titulo: newTitle,
       url: newUrl,
       descricao: newDescription,
+      folder_id: selectedFolder
     };
 
     try {
@@ -197,7 +207,12 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         onLogout={onLogout}
       />
       <div style={styles.main}>
-        <Sidebar favorites={favorites} onCreateFolder={handleCreateFolder} />
+        <Sidebar
+          favorites={favorites}
+          onCreateFolder={handleCreateFolder}
+          folders={folders}
+          onSelectFolder={setSelectedFolder}
+        />
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
             <input
