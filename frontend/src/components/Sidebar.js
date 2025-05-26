@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFolder }) {
+export default function Sidebar({ favorites, onCreateFolder, folders, setSelectedFolder }) {
   const [folderName, setFolderName] = useState('');
 
   const handleCreateFolder = () => {
@@ -11,7 +11,7 @@ export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFo
 
   return (
     <aside style={styles.sidebar}>
-      <h3>Favoritos</h3>
+      <h3>Pastas</h3>
 
       <div style={styles.folderForm}>
         <input
@@ -26,29 +26,36 @@ export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFo
         </button>
       </div>
 
-      <h4>Pastas</h4>
       <ul style={styles.list}>
-        {folders && folders.length > 0 ? (
-          folders.map(folder => (
-            <li 
-              key={folder.id} 
-              style={{ ...styles.item, cursor: 'pointer', color: '#2c3e50' }} 
-              onClick={() => onSelectFolder(folder.id)}
-            >
-              {folder.name}
-            </li>
-          ))
-        ) : (
-          <li style={{ color: '#999' }}>Nenhuma pasta</li>
-        )}
+        <li
+          style={{ ...styles.item, fontWeight: 'bold' }}
+          onClick={() => setSelectedFolder(null)}
+        >
+          <span style={styles.link}>Todos</span>
+        </li>
+
+        {folders.length === 0 && <li style={{ color: '#999' }}>Nenhuma pasta</li>}
+        {folders.map(folder => (
+          <li
+            key={folder.id}
+            style={styles.item}
+            onClick={() => setSelectedFolder(folder.id)}
+          >
+            <span style={styles.link}>{folder.name}</span>
+          </li>
+        ))}
       </ul>
 
-      <h4>Links salvos</h4>
+      <hr style={{ margin: '20px 0' }} />
+
+      <h3>Favoritos</h3>
       <ul style={styles.list}>
         {favorites.length === 0 && <li style={{ color: '#999' }}>Nenhum favorito</li>}
         {favorites.map(link => (
           <li key={link.id} style={styles.item}>
-            <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
+            <a href={link.url} target="_blank" rel="noreferrer" style={styles.link}>
+              {link.title}
+            </a>
           </li>
         ))}
       </ul>
@@ -86,10 +93,14 @@ const styles = {
   },
   list: {
     listStyle: 'none',
-    paddingLeft: 0,
-    marginTop: '10px'
+    paddingLeft: 0
   },
   item: {
-    marginBottom: '12px'
+    marginBottom: '12px',
+    cursor: 'pointer'
+  },
+  link: {
+    textDecoration: 'none',
+    color: '#2c3e50'
   }
 };

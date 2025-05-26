@@ -27,14 +27,13 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
   const handleCreateFolder = (folderName) => {
-    if (!folderName) {
-      console.error("Nome da pasta é obrigatório!");
-      return;
-    }
+    if (!folderName) return;
+
     const payload = {
       name: folderName,
       user_id: parseInt(user_id),
     };
+
     fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -211,7 +210,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
           favorites={favorites}
           onCreateFolder={handleCreateFolder}
           folders={folders}
-          onSelectFolder={setSelectedFolder}
+          setSelectedFolder={setSelectedFolder}
         />
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
