@@ -35,7 +35,7 @@ export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFo
               style={{ ...styles.item, cursor: 'pointer', color: '#2c3e50' }} 
               onClick={() => onSelectFolder(folder.id)}
             >
-              {folder.nome}
+              {folder.name}
             </li>
           ))
         ) : (

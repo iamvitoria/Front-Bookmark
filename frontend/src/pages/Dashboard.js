@@ -32,7 +32,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       return;
     }
     const payload = {
-      nome: folderName,
+      name: folderName,
       user_id: parseInt(user_id),
     };
     fetch(`${API_URL}/folders`, {
@@ -45,7 +45,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         if (data.erro) {
           alert(`Erro ao criar pasta: ${data.erro}`);
         } else {
-          setFolders(prev => [...prev, { id: data.id, nome: folderName }]);
+          setFolders(prev => [...prev, { id: data.id, name: folderName }]);
         }
       })
       .catch(err => console.error('Erro ao criar pasta:', err));
