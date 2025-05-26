@@ -9,8 +9,31 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
   const [editFolderId, setEditFolderId] = useState(null);
   const [editFolderName, setEditFolderName] = useState('');
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteFolderId, setDeleteFolderId] = useState(null);
+  const [deleteFolderName, setDeleteFolderName] = useState('');
+
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
+  const openDeleteModal = (folder) => {
+    setDeleteFolderId(folder.id);
+    setDeleteFolderName(folder.name);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteFolderId(null);
+    setDeleteFolderName('');
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteFolderId) {
+      onDeleteFolder(deleteFolderId);
+      closeDeleteModal();
+    }
+  };
+  
   const openEditModal = (folder) => {
     setEditFolderId(folder.id);
     setEditFolderName(folder.name);
@@ -163,9 +186,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm('Tem certeza que deseja excluir esta pasta?')) {
-                        onDeleteFolder(folder.id);
-                      }
+                      openDeleteModal(folder);
                       closeMenu(folder.id);
                     }}
                     onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'excluir' })}
@@ -203,6 +224,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
           </li>
         ))}
       </ul>
+
       {isEditModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
@@ -216,6 +238,19 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
             <div style={styles.modalButtons}>
               <button onClick={handleSaveEdit} style={styles.button}>Salvar</button>
               <button onClick={closeEditModal} style={styles.cancelButton}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h3>Excluir Pasta</h3>
+            <p><strong>{deleteFolderName}</strong></p>
+            <div style={styles.modalButtons}>
+              <button onClick={handleConfirmDelete} style={styles.button}>Excluir</button>
+              <button onClick={closeDeleteModal} style={styles.cancelButton}>Cancelar</button>
             </div>
           </div>
         </div>
