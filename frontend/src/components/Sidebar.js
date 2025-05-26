@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Sidebar({ favorites, onCreateFolder, folders, setSelectedFolder }) {
+export default function Sidebar({ favorites, onCreateFolder, folders, onSelectFolder }) {
   const [folderName, setFolderName] = useState('');
 
   const handleCreateFolder = () => {
@@ -29,7 +29,7 @@ export default function Sidebar({ favorites, onCreateFolder, folders, setSelecte
       <ul style={styles.list}>
         <li
           style={{ ...styles.item, fontWeight: 'bold' }}
-          onClick={() => setSelectedFolder(null)}
+          onClick={() => onSelectFolder(null)}
         >
           <span style={styles.link}>Todos</span>
         </li>
@@ -39,7 +39,7 @@ export default function Sidebar({ favorites, onCreateFolder, folders, setSelecte
           <li
             key={folder.id}
             style={styles.item}
-            onClick={() => setSelectedFolder(folder.id)}
+            onClick={() => onSelectFolder(folder.id)}
           >
             <span style={styles.link}>{folder.name}</span>
           </li>
