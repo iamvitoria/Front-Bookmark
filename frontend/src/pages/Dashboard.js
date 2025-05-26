@@ -28,12 +28,10 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   const handleCreateFolder = (folderName) => {
     if (!folderName) return;
-
     const payload = {
       name: folderName,
       user_id: parseInt(user_id),
     };
-
     fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,7 +50,6 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   useEffect(() => {
     if (!user_id) return;
-
     fetch(`${API_URL}/folders?user_id=${user_id}`)
       .then(res => res.json())
       .then(data => setFolders(data))
@@ -61,12 +58,8 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   useEffect(() => {
     if (!user_id) return;
-
     let url = `${API_URL}/bookmarks?user_id=${user_id}`;
-    if (selectedFolder) {
-      url += `&folder_id=${selectedFolder}`;
-    }
-
+    if (selectedFolder) url += `&folder_id=${selectedFolder}`;
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
@@ -78,9 +71,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         }));
         setLinks(formattedLinks);
       })
-      .catch((err) => {
-        console.error("Erro ao carregar links:", err);
-      });
+      .catch((err) => console.error("Erro ao carregar links:", err));
   }, [user_id, API_URL, selectedFolder]);
 
   const filteredLinks = links.filter(
@@ -91,13 +82,11 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     e.preventDefault();
     setErro("");
     setIsLoading(true);
-
     if (!newTitle || !newUrl) {
       alert("Título e URL são obrigatórios!");
       setIsLoading(false);
       return;
     }
-
     const newLinkData = {
       user_id: parseInt(user_id),
       titulo: newTitle,
@@ -105,25 +94,20 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       descricao: newDescription,
       folder_id: selectedFolder
     };
-
     try {
       const res = await fetch(`${API_URL}/bookmarks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLinkData),
       });
-
       if (!res.ok) throw new Error("Erro ao adicionar link");
-
       const result = await res.json();
-
       const newLink = {
         id: result.id,
         title: newTitle,
         url: newUrl,
         description: newDescription,
       };
-
       setLinks([newLink, ...links]);
       setNewTitle("");
       setNewUrl("");
@@ -136,18 +120,13 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   };
 
   function handleEdit(link) {
-    setEditingLink({
-      ...link,
-      titulo: link.title,
-      descricao: link.description,
-    });
+    setEditingLink({ ...link, titulo: link.title, descricao: link.description });
   }
 
   async function salvarEdicao(e) {
     e.preventDefault();
     setErro("");
     setIsSaving(true);
-
     const res = await fetch(`${API_URL}/bookmarks/${editingLink.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -157,7 +136,6 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         descricao: editingLink.descricao,
       }),
     });
-
     if (res.ok) {
       const updated = {
         id: editingLink.id,
@@ -176,12 +154,8 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const handleDelete = async (id) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`${API_URL}/bookmarks/${id}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`${API_URL}/bookmarks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Erro ao deletar link");
-
       setLinks((current) => current.filter((link) => link.id !== id));
       setFavorites((current) => current.filter((fav) => fav.id !== id));
     } catch (error) {
@@ -244,23 +218,12 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
           </form>
 
           {editingLink && (
-            <form
-              onSubmit={salvarEdicao}
-              style={{
-                ...styles.form,
-                backgroundColor: "#fff",
-                padding: "15px",
-                borderRadius: "8px",
-                marginBottom: "20px",
-              }}
-            >
+            <form onSubmit={salvarEdicao} style={styles.form}>
               <input
                 type="text"
                 placeholder="Título"
                 value={editingLink.titulo}
-                onChange={(e) =>
-                  setEditingLink({ ...editingLink, titulo: e.target.value })
-                }
+                onChange={(e) => setEditingLink({ ...editingLink, titulo: e.target.value })}
                 style={styles.input}
                 required
               />
@@ -268,9 +231,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
                 type="url"
                 placeholder="URL"
                 value={editingLink.url}
-                onChange={(e) =>
-                  setEditingLink({ ...editingLink, url: e.target.value })
-                }
+                onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })}
                 style={styles.input}
                 required
               />
@@ -278,9 +239,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
                 type="text"
                 placeholder="Descrição"
                 value={editingLink.descricao || ""}
-                onChange={(e) =>
-                  setEditingLink({ ...editingLink, descricao: e.target.value })
-                }
+                onChange={(e) => setEditingLink({ ...editingLink, descricao: e.target.value })}
                 style={styles.input}
               />
               {erro && <span style={styles.erro}>{erro}</span>}
@@ -337,12 +296,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 const styles = {
   container: { height: "100vh", display: "flex", flexDirection: "column" },
   main: { flex: 1, display: "flex" },
-  content: {
-    flex: 1,
-    padding: "20px",
-    background: "#e9ebee",
-    overflowY: "auto",
-  },
+  content: { flex: 1, padding: "20px", background: "#e9ebee", overflowY: "auto" },
   form: {
     display: "flex",
     flexWrap: "wrap",
@@ -368,7 +322,7 @@ const styles = {
     fontWeight: "bold",
   },
   erro: {
-    color: "2c3e50",
+    color: "red",
     fontSize: "12px",
   },
   modalOverlay: {
