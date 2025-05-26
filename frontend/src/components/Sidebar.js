@@ -4,8 +4,32 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
   const [folderName, setFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const user_id = localStorage.getItem("user_id");
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFolderId, setEditFolderId] = useState(null);
+  const [editFolderName, setEditFolderName] = useState('');
+
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
+  const openEditModal = (folder) => {
+    setEditFolderId(folder.id);
+    setEditFolderName(folder.name);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditFolderId(null);
+    setEditFolderName('');
+  };
+
+  const handleSaveEdit = () => {
+    if (editFolderName.trim() !== '') {
+      onEditFolder(editFolderId, editFolderName);
+      closeEditModal();
+    }
+  };
+  
   const handleFolderClick = (id) => {
     setSelectedFolder(id === selectedFolder ? null : id);
   };
@@ -122,8 +146,8 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const newName = prompt('Novo nome da pasta:', folder.name);
-                      if (newName) onEditFolder(folder.id, newName);
+                      openEditModal(folder);
+                      closeMenu(folder.id);
                       closeMenu(folder.id);
                     }}
                     onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'editar' })}
@@ -154,12 +178,48 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                   >
                     Excluir
                   </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Aqui você decide o que fazer ao adicionar link
+                      // Pode ser um modal, redirecionamento ou só um console.log
+                      alert(`Adicionar link à pasta: ${folder.name}`);
+                      closeMenu(folder.id);
+                    }}
+                    onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'adicionar' })}
+                    onMouseLeave={() => setHoveredMenuItem({ folderId: null, item: null })}
+                    style={{
+                      ...styles.menuItem,
+                      backgroundColor:
+                        hoveredMenuItem.folderId === folder.id && hoveredMenuItem.item === 'adicionar' ? '#dfe6e9' : 'transparent',
+                    }}
+                  >
+                    Adicionar Link
+                </button>
                 </div>
               )}
             </div>
           </li>
         ))}
       </ul>
+      {isEditModalOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h3>Editar Pasta</h3>
+            <input
+              type="text"
+              value={editFolderName}
+              onChange={(e) => setEditFolderName(e.target.value)}
+              style={styles.input}
+            />
+            <div style={styles.modalButtons}>
+              <button onClick={handleSaveEdit} style={styles.button}>Salvar</button>
+              <button onClick={closeEditModal} style={styles.cancelButton}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -229,5 +289,37 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     padding: '5px'
-  }
+  },
+  modalOverlay: {
+  position: 'fixed',
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000
+},
+modalContent: {
+  background: '#fff',
+  padding: '20px',
+  borderRadius: '8px',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+  width: '300px',
+  textAlign: 'center'
+},
+cancelButton: {
+  padding: '6px 10px',
+  backgroundColor: '#ccc',
+  color: '#000',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer'
+},
+modalButtons: {
+  marginTop: '20px',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center', 
+  gap: '10px'
+}
 };
