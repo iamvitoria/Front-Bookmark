@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 
-export default function Sidebar({ favorites, onCreateFolder, folders, setSelectedFolder }) {
+export default function Sidebar({ favorites, onCreateFolder, folders, setSelectedFolder, selectedFolder, onEditFolder, onDeleteFolder }) {
   const [folderName, setFolderName] = useState('');
+
+  const handleFolderClick = (id) => {
+    setSelectedFolder(id === selectedFolder ? null : id);
+  }
 
   const handleCreateFolder = () => {
     if (folderName.trim() === '') return;
@@ -31,31 +35,47 @@ export default function Sidebar({ favorites, onCreateFolder, folders, setSelecte
           style={{ ...styles.item, fontWeight: 'bold' }}
           onClick={() => setSelectedFolder(null)}
         >
-          <span style={styles.link}>Todos</span>
         </li>
 
         {folders.length === 0 && <li style={{ color: '#999' }}>Nenhuma pasta</li>}
         {folders.map(folder => (
           <li
             key={folder.id}
-            style={styles.item}
-            onClick={() => setSelectedFolder(folder.id)}
+            style={{
+              ...styles.item,
+              backgroundColor: selectedFolder === folder.id ? '#dfe6e9' : 'transparent',
+              padding: '5px',
+              borderRadius: '4px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+            onClick={() => handleFolderClick(folder.id)}
           >
             <span style={styles.link}>{folder.name}</span>
-          </li>
-        ))}
-      </ul>
-
-      <hr style={{ margin: '20px 0' }} />
-
-      <h3>Favoritos</h3>
-      <ul style={styles.list}>
-        {favorites.length === 0 && <li style={{ color: '#999' }}>Nenhum favorito</li>}
-        {favorites.map(link => (
-          <li key={link.id} style={styles.item}>
-            <a href={link.url} target="_blank" rel="noreferrer" style={styles.link}>
-              {link.title}
-            </a>
+            <div>
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  const newName = prompt('Novo nome da pasta:', folder.name);
+                  if (newName) onEditFolder(folder.id, newName);
+                }} 
+                style={styles.iconButton}
+              >
+                ✏️
+              </button>
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (window.confirm('Tem certeza que deseja excluir esta pasta?')) {
+                    onDeleteFolder(folder.id);
+                  }
+                }} 
+                style={styles.iconButton}
+              >
+                🗑️
+              </button>
+            </div>
           </li>
         ))}
       </ul>

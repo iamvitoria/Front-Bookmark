@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function LinkList({ links, onEdit, onDelete }) {
+export default function LinkList({ links, onEdit, onDelete, onAdd }) {
   if (!links || links.length === 0) {
     return <p style={{ padding: '20px' }}>Nenhum link encontrado.</p>;
   }

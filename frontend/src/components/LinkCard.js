@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function LinkCard({ link, onEdit, onDelete }) {
+export default function LinkCard({ link, onEdit, onDelete, onAdd }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -15,6 +15,7 @@ export default function LinkCard({ link, onEdit, onDelete }) {
           <ul style={styles.menu}>
             <li onClick={() => { setMenuOpen(false); onEdit(link); }} style={styles.menuItem}>Editar</li>
             <li onClick={() => { setMenuOpen(false); onDelete(link.id); }} style={styles.menuItem}>Excluir</li>
+            <li onClick={() => { setMenuOpen(false); onAdd(link.id); }} style={styles.menuItem}>Adicionar à pasta</li>
           </ul>
         )}
       </div>

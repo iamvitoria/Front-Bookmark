@@ -48,6 +48,38 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch(err => console.error('Erro ao criar pasta:', err));
   };
 
+  const handleEditFolder = (folder) => {
+  const newName = prompt("Novo nome da pasta:", folder.name);
+  if (!newName) return;
+
+  fetch(`${API_URL}/folders/${folder.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: newName }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, name: newName } : f));
+    })
+    .catch(err => console.error("Erro ao editar pasta:", err));
+};
+
+const handleDeleteFolder = (folderId) => {
+  const confirm = window.confirm("Tem certeza que deseja excluir esta pasta?");
+  if (!confirm) return;
+
+  fetch(`${API_URL}/folders/${folderId}`, {
+    method: "DELETE",
+  })
+    .then(() => {
+      setFolders(prev => prev.filter(f => f.id !== folderId));
+      if (selectedFolder === folderId) {
+        setSelectedFolder(null);
+      }
+    })
+    .catch(err => console.error("Erro ao excluir pasta:", err));
+};
+
   useEffect(() => {
     if (!user_id) return;
     fetch(`${API_URL}/folders?user_id=${user_id}`)
@@ -185,6 +217,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
           onCreateFolder={handleCreateFolder}
           folders={folders}
           setSelectedFolder={setSelectedFolder}
+          selectedFolder={selectedFolder}
+          onEditFolder={handleEditFolder}
+          onDeleteFolder={handleDeleteFolder}
         />
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
@@ -263,7 +298,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                   <button
                     onClick={() => handleDelete(confirmDeleteId)}
-                    style={{ ...styles.button, backgroundColor: "red" }}
+                    style={{ ...styles.button, backgroundColor: "#2c3e50" }}
                   >
                     {deletingId === confirmDeleteId ? "Excluindo..." : "Sim, excluir"}
                   </button>

@@ -2,10 +2,22 @@ import React, { useState } from 'react';
 
 export default function Header({ onSearch, nomeUsuario, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hover, setHover] = useState(false);
 
   return (
     <header style={styles.header}>
-      <div style={styles.logo}>Linkaí</div>
+      <div
+        style={{ 
+          ...styles.logo, 
+          cursor: hover ? 'pointer' : 'default', 
+          opacity: hover ? 0.8 : 1 
+        }}
+        onClick={() => window.location.reload()}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+      >
+        Linkaí
+      </div>
 
       <div style={styles.rightSection}>
         <input
@@ -16,7 +28,10 @@ export default function Header({ onSearch, nomeUsuario, onLogout }) {
         />
 
         <div style={styles.profileContainer}>
-          <div style={styles.profile} onClick={() => setMenuOpen(!menuOpen)}>
+          <div 
+            style={{ ...styles.profile, cursor: 'pointer' }} 
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
             {nomeUsuario} ▾
           </div>
           {menuOpen && (
