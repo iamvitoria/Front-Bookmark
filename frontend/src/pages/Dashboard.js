@@ -48,34 +48,36 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
       .catch(err => console.error('Erro ao criar pasta:', err));
   };
 
-  const handleEditFolder = (folder) => {
-  const newName = prompt("Novo nome da pasta:", folder.name);
-  if (!newName) return;
+const handleEditFolder = (folderId, currentName) => {
+  const newName = prompt("Novo nome da pasta:", currentName);
+  if (!newName || newName.trim() === '') return;
 
-  fetch(`${API_URL}/folders/${folder.id}`, {
+  fetch(`${API_URL}/folders/${folderId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: newName }),
   })
-    .then(res => res.json())
-    .then(data => {
-      setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, name: newName } : f));
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao editar pasta");
+      return res.json();
+    })
+    .then(() => {
+      setFolders(prev => prev.map(f => f.id === folderId ? { ...f, name: newName } : f));
     })
     .catch(err => console.error("Erro ao editar pasta:", err));
 };
 
 const handleDeleteFolder = (folderId) => {
-  const confirm = window.confirm("Tem certeza que deseja excluir esta pasta?");
-  if (!confirm) return;
+  const confirmDelete = window.confirm("Tem certeza que deseja excluir esta pasta?");
+  if (!confirmDelete) return;
 
   fetch(`${API_URL}/folders/${folderId}`, {
     method: "DELETE",
   })
-    .then(() => {
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao excluir pasta");
       setFolders(prev => prev.filter(f => f.id !== folderId));
-      if (selectedFolder === folderId) {
-        setSelectedFolder(null);
-      }
+      if (selectedFolder === folderId) setSelectedFolder(null);
     })
     .catch(err => console.error("Erro ao excluir pasta:", err));
 };
