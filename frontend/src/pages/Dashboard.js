@@ -23,64 +23,73 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [folders, setFolders] = useState([]);
 
+  const [showEditFolderModal, setShowEditFolderModal] = useState(false);
+  const [editFolderData, setEditFolderData] = useState({ id: null, currentName: '' });
+
+  const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
+  const [deleteFolderId, setDeleteFolderId] = useState(null);
+
   const user_id = localStorage.getItem("user_id");
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
   const handleCreateFolder = (folderName) => {
     if (!folderName) return;
-    const payload = {
-      name: folderName,
-      user_id: parseInt(user_id),
-    };
+    const payload = { name: folderName, user_id: parseInt(user_id) };
     fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-      .then(res => res.json().catch(() => ({ erro: 'Resposta não é JSON' })))
+      .then(res => res.json())
       .then(data => {
-        if (data.erro) {
-          alert(`Erro ao criar pasta: ${data.erro}`);
-        } else {
+        if (!data.erro) {
           setFolders(prev => [...prev, { id: data.id, name: folderName }]);
         }
       })
       .catch(err => console.error('Erro ao criar pasta:', err));
   };
 
-const handleEditFolder = (folderId, currentName) => {
-  const newName = prompt("Novo nome da pasta:", currentName);
-  if (!newName || newName.trim() === '') return;
+  const handleEditFolder = (folderId, currentName) => {
+    setEditFolderData({ id: folderId, currentName });
+    setShowEditFolderModal(true);
+  };
 
-  fetch(`${API_URL}/folders/${folderId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: newName }),
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Erro ao editar pasta");
-      return res.json();
-    })
-    .then(() => {
-      setFolders(prev => prev.map(f => f.id === folderId ? { ...f, name: newName } : f));
-    })
-    .catch(err => console.error("Erro ao editar pasta:", err));
-};
+  const confirmEditFolder = () => {
+    const { id, currentName } = editFolderData;
+    if (!currentName.trim()) return;
 
-const handleDeleteFolder = (folderId) => {
-  const confirmDelete = window.confirm("Tem certeza que deseja excluir esta pasta?");
-  if (!confirmDelete) return;
-
-  fetch(`${API_URL}/folders/${folderId}`, {
-    method: "DELETE",
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Erro ao excluir pasta");
-      setFolders(prev => prev.filter(f => f.id !== folderId));
-      if (selectedFolder === folderId) setSelectedFolder(null);
+    fetch(`${API_URL}/folders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: currentName }),
     })
-    .catch(err => console.error("Erro ao excluir pasta:", err));
-};
+      .then(res => res.json())
+      .then(() => {
+        setFolders(prev => prev.map(f => f.id === id ? { ...f, name: currentName } : f));
+      })
+      .catch(err => console.error("Erro ao editar pasta:", err))
+      .finally(() => setShowEditFolderModal(false));
+  };
+
+  const handleDeleteFolder = (folderId) => {
+    setDeleteFolderId(folderId);
+    setShowDeleteFolderModal(true);
+  };
+
+  const confirmDeleteFolder = () => {
+    fetch(`${API_URL}/folders/${deleteFolderId}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        setFolders(prev => prev.filter(f => f.id !== deleteFolderId));
+        if (selectedFolder === deleteFolderId) setSelectedFolder(null);
+      })
+      .catch(err => console.error("Erro ao excluir pasta:", err))
+      .finally(() => {
+        setShowDeleteFolderModal(false);
+        setDeleteFolderId(null);
+      });
+  };
 
   useEffect(() => {
     if (!user_id) return;
@@ -225,29 +234,9 @@ const handleDeleteFolder = (folderId) => {
         />
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
-            <input
-              type="text"
-              placeholder="Título"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              style={styles.input}
-              required
-            />
-            <input
-              type="url"
-              placeholder="URL"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              style={styles.input}
-              required
-            />
-            <input
-              type="text"
-              placeholder="Descrição (opcional)"
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              style={styles.input}
-            />
+            <input type="text" placeholder="Título" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} style={styles.input} required />
+            <input type="url" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} style={styles.input} required />
+            <input type="text" placeholder="Descrição (opcional)" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} style={styles.input} />
             {erro && <span style={styles.erro}>{erro}</span>}
             <button type="submit" style={styles.button} disabled={isLoading}>
               {isLoading ? "Adicionando..." : "Adicionar Link"}
@@ -256,38 +245,14 @@ const handleDeleteFolder = (folderId) => {
 
           {editingLink && (
             <form onSubmit={salvarEdicao} style={styles.form}>
-              <input
-                type="text"
-                placeholder="Título"
-                value={editingLink.titulo}
-                onChange={(e) => setEditingLink({ ...editingLink, titulo: e.target.value })}
-                style={styles.input}
-                required
-              />
-              <input
-                type="url"
-                placeholder="URL"
-                value={editingLink.url}
-                onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })}
-                style={styles.input}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Descrição"
-                value={editingLink.descricao || ""}
-                onChange={(e) => setEditingLink({ ...editingLink, descricao: e.target.value })}
-                style={styles.input}
-              />
+              <input type="text" placeholder="Título" value={editingLink.titulo} onChange={(e) => setEditingLink({ ...editingLink, titulo: e.target.value })} style={styles.input} required />
+              <input type="url" placeholder="URL" value={editingLink.url} onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })} style={styles.input} required />
+              <input type="text" placeholder="Descrição" value={editingLink.descricao || ""} onChange={(e) => setEditingLink({ ...editingLink, descricao: e.target.value })} style={styles.input} />
               {erro && <span style={styles.erro}>{erro}</span>}
               <button type="submit" style={styles.button} disabled={isSaving}>
                 {isSaving ? "Salvando..." : "Salvar"}
               </button>
-              <button
-                type="button"
-                onClick={() => setEditingLink(null)}
-                style={{ ...styles.button, backgroundColor: "gray" }}
-              >
+              <button type="button" onClick={() => setEditingLink(null)} style={{ ...styles.button, backgroundColor: "gray" }}>
                 Cancelar
               </button>
             </form>
@@ -298,19 +263,10 @@ const handleDeleteFolder = (folderId) => {
               <div style={styles.modal}>
                 <p>Tem certeza que deseja excluir este link?</p>
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                  <button
-                    onClick={() => handleDelete(confirmDeleteId)}
-                    style={{ ...styles.button, backgroundColor: "#2c3e50" }}
-                  >
+                  <button onClick={() => handleDelete(confirmDeleteId)} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>
                     {deletingId === confirmDeleteId ? "Excluindo..." : "Sim, excluir"}
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowConfirm(false);
-                      setConfirmDeleteId(null);
-                    }}
-                    style={{ ...styles.button, backgroundColor: "gray" }}
-                  >
+                  <button onClick={() => { setShowConfirm(false); setConfirmDeleteId(null); }} style={{ ...styles.button, backgroundColor: "gray" }}>
                     Cancelar
                   </button>
                 </div>
@@ -318,12 +274,33 @@ const handleDeleteFolder = (folderId) => {
             </div>
           )}
 
-          <LinkList
-            links={filteredLinks}
-            onEdit={handleEdit}
-            onDelete={confirmDelete}
-            grid
-          />
+          <LinkList links={filteredLinks} onEdit={handleEdit} onDelete={confirmDelete} grid />
+
+          {showEditFolderModal && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modal}>
+                <p>Editar nome da pasta:</p>
+                <input type="text" value={editFolderData.currentName} onChange={(e) => setEditFolderData({ ...editFolderData, currentName: e.target.value })} style={styles.input} />
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button onClick={confirmEditFolder} style={styles.button}>Salvar</button>
+                  <button onClick={() => setShowEditFolderModal(false)} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showDeleteFolderModal && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modal}>
+                <p>Tem certeza que deseja excluir esta pasta?</p>
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button onClick={confirmDeleteFolder} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>Excluir</button>
+                  <button onClick={() => setShowDeleteFolderModal(false)} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
     </div>
