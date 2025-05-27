@@ -6,9 +6,7 @@ export default function Sidebar({
   setSelectedFolder = [],
   selectedFolder = [],
   onEditFolder = [],
-  onDeleteFolder = [],
-  savedLinks = [],
-  onAddLinksToFolder = []
+  onDeleteFolder = []
 }) {
   const [folderName, setFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -23,11 +21,6 @@ export default function Sidebar({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteFolderId, setDeleteFolderId] = useState(null);
   const [deleteFolderName, setDeleteFolderName] = useState('');
-
-  // Estados para adicionar links
-  const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
-  const [addLinkFolderId, setAddLinkFolderId] = useState(null);
-  const [selectedLinks, setSelectedLinks] = useState([]);
 
   // Menus de opções nas pastas
   const [showMenus, setShowMenus] = useState({});
@@ -75,32 +68,6 @@ export default function Sidebar({
     if (editFolderName.trim() !== '') {
       onEditFolder(editFolderId, editFolderName.trim());
       closeEditModal();
-    }
-  };
-
-  // Abrir modal adicionar links
-  const openAddLinkModal = (folder) => {
-    setAddLinkFolderId(folder.id);
-    setSelectedLinks([]);
-    setIsAddLinkModalOpen(true);
-  };
-
-  const closeAddLinkModal = () => {
-    setIsAddLinkModalOpen(false);
-    setAddLinkFolderId(null);
-    setSelectedLinks([]);
-  };
-
-  const toggleLinkSelection = (linkId) => {
-    setSelectedLinks((prev) =>
-      prev.includes(linkId) ? prev.filter((id) => id !== linkId) : [...prev, linkId]
-    );
-  };
-
-  const handleAddSelectedLinks = () => {
-    if (addLinkFolderId && selectedLinks.length > 0) {
-      onAddLinksToFolder(addLinkFolderId, selectedLinks);
-      closeAddLinkModal();
     }
   };
 
@@ -257,23 +224,6 @@ export default function Sidebar({
                   >
                     Excluir
                   </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openAddLinkModal(folder);
-                      closeMenu(folder.id);
-                    }}
-                    onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'adicionar' })}
-                    onMouseLeave={() => setHoveredMenuItem({ folderId: null, item: null })}
-                    style={{
-                      ...styles.menuItem,
-                      backgroundColor:
-                        hoveredMenuItem.folderId === folder.id && hoveredMenuItem.item === 'adicionar' ? '#dfe6e9' : 'transparent',
-                    }}
-                  >
-                    Adicionar Link
-                  </button>
                 </div>
               )}
             </div>
@@ -322,61 +272,13 @@ export default function Sidebar({
           </div>
         </div>
       )}
-
-      {/* Modal Adicionar Links */}
-      {isAddLinkModalOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h3>Adicionar Links à Pasta</h3>
-            <div style={{ maxHeight: '200px', overflowY: 'auto', textAlign: 'left', marginBottom: '15px' }}>
-              {savedLinks.length === 0 && <p>Nenhum link salvo disponível.</p>}
-              {savedLinks.map((link) => (
-                <label
-                  key={link.id}
-                  style={{
-                    display: 'block',
-                    marginBottom: '8px',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedLinks.includes(link.id)}
-                    onChange={() => toggleLinkSelection(link.id)}
-                    style={{ marginRight: '8px' }}
-                  />
-                  {link.title || link.url}
-                </label>
-              ))}
-            </div>
-            <div style={styles.modalButtons}>
-              <button
-                onClick={handleAddSelectedLinks}
-                disabled={selectedLinks.length === 0}
-                style={{
-                  ...styles.button,
-                  backgroundColor: selectedLinks.length === 0 ? '#b2bec3' : '#2c3e50',
-                  cursor: selectedLinks.length === 0 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Adicionar
-              </button>
-              <button onClick={closeAddLinkModal} style={styles.cancelButton}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
 
-// Estilos simples para organizar visualmente
 const styles = {
   sidebar: {
-    width: '270px',
+    width: '280px',
     padding: '15px',
     borderRight: '1px solid #ccc',
     height: '100vh',
