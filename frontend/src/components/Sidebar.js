@@ -1,20 +1,44 @@
 import React, { useState } from 'react';
 
-export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, selectedFolder, onEditFolder, onDeleteFolder }) {
+export default function Sidebar({
+  onCreateFolder = [],
+  folders =[],
+  setSelectedFolder = [],
+  selectedFolder = [],
+  onEditFolder = [],
+  onDeleteFolder = [],
+  savedLinks = [],
+  onAddLinksToFolder = []
+}) {
   const [folderName, setFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const user_id = localStorage.getItem("user_id");
 
+  // Estados para edição
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFolderId, setEditFolderId] = useState(null);
   const [editFolderName, setEditFolderName] = useState('');
 
+  // Estados para exclusão
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteFolderId, setDeleteFolderId] = useState(null);
   const [deleteFolderName, setDeleteFolderName] = useState('');
 
+  // Estados para adicionar links
+  const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [addLinkFolderId, setAddLinkFolderId] = useState(null);
+  const [selectedLinks, setSelectedLinks] = useState([]);
+
+  // Menus de opções nas pastas
+  const [showMenus, setShowMenus] = useState({});
+
+  // Hover para folder e itens do menu
+  const [hoveredFolderId, setHoveredFolderId] = useState(null);
+  const [hoveredMenuItem, setHoveredMenuItem] = useState({ folderId: null, item: null });
+
   const API_URL = process.env.REACT_APP_API_URL || 'https://project3-2025a-giulia-vitoria.onrender.com';
 
+  // Abrir modal excluir
   const openDeleteModal = (folder) => {
     setDeleteFolderId(folder.id);
     setDeleteFolderName(folder.name);
@@ -33,7 +57,8 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
       closeDeleteModal();
     }
   };
-  
+
+  // Abrir modal editar
   const openEditModal = (folder) => {
     setEditFolderId(folder.id);
     setEditFolderName(folder.name);
@@ -48,17 +73,57 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
 
   const handleSaveEdit = () => {
     if (editFolderName.trim() !== '') {
-      onEditFolder(editFolderId, editFolderName);
+      onEditFolder(editFolderId, editFolderName.trim());
       closeEditModal();
     }
   };
-  
+
+  // Abrir modal adicionar links
+  const openAddLinkModal = (folder) => {
+    setAddLinkFolderId(folder.id);
+    setSelectedLinks([]);
+    setIsAddLinkModalOpen(true);
+  };
+
+  const closeAddLinkModal = () => {
+    setIsAddLinkModalOpen(false);
+    setAddLinkFolderId(null);
+    setSelectedLinks([]);
+  };
+
+  const toggleLinkSelection = (linkId) => {
+    setSelectedLinks((prev) =>
+      prev.includes(linkId) ? prev.filter((id) => id !== linkId) : [...prev, linkId]
+    );
+  };
+
+  const handleAddSelectedLinks = () => {
+    if (addLinkFolderId && selectedLinks.length > 0) {
+      onAddLinksToFolder(addLinkFolderId, selectedLinks);
+      closeAddLinkModal();
+    }
+  };
+
+  // Toggle menu vertical (três pontos)
+  const toggleMenu = (folderId) => {
+    setShowMenus((prev) => ({
+      ...prev,
+      [folderId]: !prev[folderId],
+    }));
+  };
+
+  const closeMenu = (id) => {
+    setShowMenus(prev => ({ ...prev, [id]: false }));
+  };
+
+  // Seleciona/deseleciona pasta
   const handleFolderClick = (id) => {
     setSelectedFolder(id === selectedFolder ? null : id);
   };
 
+  // Criar pasta nova
   const handleCreateFolder = async () => {
-    if (!folderName) {
+    if (!folderName.trim()) {
       alert("Nome da pasta é obrigatório!");
       return;
     }
@@ -66,7 +131,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
     setIsCreatingFolder(true);
 
     const payload = {
-      name: folderName,
+      name: folderName.trim(),
       user_id: parseInt(user_id),
     };
 
@@ -83,11 +148,11 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
 
       const newFolder = {
         id: data.id,
-        name: folderName
+        name: folderName.trim(),
       };
 
       onCreateFolder(newFolder);
-      setFolderName("");  // Limpa o input
+      setFolderName(""); // limpa o input
     } catch (error) {
       console.error('Erro ao criar pasta:', error);
       alert(error.message);
@@ -95,14 +160,6 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
       setIsCreatingFolder(false);
     }
   };
-
-  const [showMenus, setShowMenus] = useState({});
-  const closeMenu = (id) => {
-    setShowMenus(prev => ({ ...prev, [id]: false }));
-  };
-
-  const [hoveredFolderId, setHoveredFolderId] = useState(null);
-  const [hoveredMenuItem, setHoveredMenuItem] = useState({ folderId: null, item: null });
 
   return (
     <aside style={styles.sidebar}>
@@ -129,7 +186,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
       <ul style={styles.list}>
         {folders.length === 0 && <li style={{ color: '#999' }}>Nenhuma pasta</li>}
 
-        {folders.map(folder => (
+        {folders.map((folder) => (
           <li
             key={folder.id}
             onClick={() => handleFolderClick(folder.id)}
@@ -157,9 +214,10 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowMenus({ ...showMenus, [folder.id]: !showMenus[folder.id] });
+                  toggleMenu(folder.id);
                 }}
                 style={styles.iconButton}
+                aria-label="Abrir menu"
               >
                 &#8942;
               </button>
@@ -170,7 +228,6 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(folder);
-                      closeMenu(folder.id);
                       closeMenu(folder.id);
                     }}
                     onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'editar' })}
@@ -183,6 +240,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                   >
                     Editar
                   </button>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -203,9 +261,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Aqui você decide o que fazer ao adicionar link
-                      // Pode ser um modal, redirecionamento ou só um console.log
-                      alert(`Adicionar link à pasta: ${folder.name}`);
+                      openAddLinkModal(folder);
                       closeMenu(folder.id);
                     }}
                     onMouseEnter={() => setHoveredMenuItem({ folderId: folder.id, item: 'adicionar' })}
@@ -217,7 +273,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
                     }}
                   >
                     Adicionar Link
-                </button>
+                  </button>
                 </div>
               )}
             </div>
@@ -225,6 +281,7 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
         ))}
       </ul>
 
+      {/* Modal Editar Pasta */}
       {isEditModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
@@ -234,23 +291,80 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
               value={editFolderName}
               onChange={(e) => setEditFolderName(e.target.value)}
               style={styles.input}
+              autoFocus
             />
             <div style={styles.modalButtons}>
-              <button onClick={handleSaveEdit} style={styles.button}>Salvar</button>
-              <button onClick={closeEditModal} style={styles.cancelButton}>Cancelar</button>
+              <button onClick={handleSaveEdit} style={styles.button}>
+                Salvar
+              </button>
+              <button onClick={closeEditModal} style={styles.cancelButton}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal Excluir Pasta */}
       {isDeleteModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <h3>Excluir Pasta</h3>
-            <p><strong>{deleteFolderName}</strong></p>
+            <p>Tem certeza que deseja excluir a pasta <strong>{deleteFolderName}</strong>?</p>
             <div style={styles.modalButtons}>
-              <button onClick={handleConfirmDelete} style={styles.button}>Excluir</button>
-              <button onClick={closeDeleteModal} style={styles.cancelButton}>Cancelar</button>
+              <button onClick={handleConfirmDelete} style={styles.button}>
+                Excluir
+              </button>
+              <button onClick={closeDeleteModal} style={styles.cancelButton}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Adicionar Links */}
+      {isAddLinkModalOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h3>Adicionar Links à Pasta</h3>
+            <div style={{ maxHeight: '200px', overflowY: 'auto', textAlign: 'left', marginBottom: '15px' }}>
+              {savedLinks.length === 0 && <p>Nenhum link salvo disponível.</p>}
+              {savedLinks.map((link) => (
+                <label
+                  key={link.id}
+                  style={{
+                    display: 'block',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedLinks.includes(link.id)}
+                    onChange={() => toggleLinkSelection(link.id)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {link.title || link.url}
+                </label>
+              ))}
+            </div>
+            <div style={styles.modalButtons}>
+              <button
+                onClick={handleAddSelectedLinks}
+                disabled={selectedLinks.length === 0}
+                style={{
+                  ...styles.button,
+                  backgroundColor: selectedLinks.length === 0 ? '#b2bec3' : '#2c3e50',
+                  cursor: selectedLinks.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Adicionar
+              </button>
+              <button onClick={closeAddLinkModal} style={styles.cancelButton}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
@@ -259,102 +373,119 @@ export default function Sidebar({ onCreateFolder, folders, setSelectedFolder, se
   );
 }
 
+// Estilos simples para organizar visualmente
 const styles = {
   sidebar: {
-    width: '220px',
-    background: '#f4f6f8',
-    padding: '20px',
-    borderRight: '1px solid #ddd',
-    height: 'calc(100vh - 60px)',
-    overflowY: 'auto'
+    width: '270px',
+    padding: '15px',
+    borderRight: '1px solid #ccc',
+    height: '100vh',
+    boxSizing: 'border-box',
+    backgroundColor: '#f5f6fa',
+    display: 'flex',
+    flexDirection: 'column',
   },
   folderForm: {
-    display: 'flex',
     marginBottom: '15px',
-    gap: '5px'
+    display: 'flex',
+    gap: '8px',
   },
   input: {
     flex: 1,
-    padding: '5px',
-    border: '1px solid #ccc',
-    borderRadius: '4px'
+    padding: '6px 8px',
+    borderRadius: '4px',
+    border: '1px solid #bbb',
+    fontSize: '14px',
   },
   button: {
-    padding: '6px 10px',
+    padding: '6px 12px',
     backgroundColor: '#2c3e50',
-    color: '#fff',
+    color: 'white',
     border: 'none',
     borderRadius: '4px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '14px',
+  },
+  cancelButton: {
+    padding: '6px 12px',
+    backgroundColor: '#d63031',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '14px',
+    marginLeft: '10px',
   },
   list: {
-    listStyle: 'none',
-    paddingLeft: 0
+    listStyleType: 'none',
+    paddingLeft: 0,
+    margin: 0,
+    flex: 1,
+    overflowY: 'auto',
   },
   item: {
-    marginBottom: '12px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    userSelect: 'none',
   },
   link: {
-    textDecoration: 'none',
-    color: '#2c3e50'
-  },
-  menu: {
-    position: 'absolute',
-    right: '0',
-    top: '25px',
-    backgroundColor: 'white',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-    zIndex: 10
-  },
-  menuItem: {
-    display: 'block',
-    padding: '8px 12px',
-    width: '100%',
-    border: 'none',
-    background: 'none',
-    textAlign: 'left',
-    cursor: 'pointer',
-    color: '#2c3e50'
+    flex: 1,
+    userSelect: 'none',
   },
   iconButton: {
     background: 'none',
     border: 'none',
+    fontSize: '20px',
     cursor: 'pointer',
-    padding: '5px'
+    color: '#555',
+    padding: '0 4px',
+  },
+  menu: {
+    position: 'absolute',
+    right: '5px',
+    top: '100%',
+    backgroundColor: '#fff',
+    boxShadow: '0 0 6px rgba(0,0,0,0.15)',
+    borderRadius: '4px',
+    zIndex: 1000,
+    marginTop: '6px',
+    minWidth: '120px',
+  },
+  menuItem: {
+    display: 'block',
+    padding: '8px 12px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    width: '100%',
+    textAlign: 'left',
+    cursor: 'pointer',
+    fontSize: '14px',
   },
   modalOverlay: {
-  position: 'fixed',
-  top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 1000
-},
-modalContent: {
-  background: '#fff',
-  padding: '20px',
-  borderRadius: '8px',
-  boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-  width: '300px',
-  textAlign: 'center'
-},
-cancelButton: {
-  padding: '6px 10px',
-  backgroundColor: '#ccc',
-  color: '#000',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer'
-},
-modalButtons: {
-  marginTop: '20px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center', 
-  gap: '10px'
-}
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2000,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    width: '350px',
+    boxSizing: 'border-box',
+    boxShadow: '0 0 15px rgba(0,0,0,0.25)',
+    textAlign: 'center',
+  },
+  modalButtons: {
+    marginTop: '15px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
 };
