@@ -71,8 +71,10 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   };
 
   const handleDeleteFolder = (folderId) => {
-    setDeleteFolderId(folderId);
-    setShowDeleteFolderModal(true);
+    setFolders(prev => prev.filter(f => f.id !== folderId));
+    if (selectedFolder === folderId) {
+      setSelectedFolder(null);
+    }
   };
 
   const confirmDeleteFolder = () => {

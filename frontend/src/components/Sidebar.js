@@ -49,20 +49,18 @@ export default function Sidebar({
       fetch(`${API_URL}/folders/${deleteFolderId}`, {
         method: 'DELETE',
       })
-        .then(res => {
-          if (!res.ok) throw new Error('Erro ao excluir pasta');
-          return res.json();
-        })
-        .then(() => {
-          onDeleteFolder(deleteFolderId);
-          closeDeleteModal();
-        })
-        .catch(err => {
-          console.error('Erro ao excluir pasta:', err);
-          alert('Erro ao excluir pasta');
-        });
+      .then(res => {
+        if (!res.ok) throw new Error("Erro ao excluir pasta");
+        onDeleteFolder(deleteFolderId);
+        closeDeleteModal();
+      })
+      .catch(err => {
+        console.error("Erro ao excluir pasta:", err);
+        alert("Erro ao excluir pasta");
+      });
     }
   };
+
 
   // Abrir modal editar
   const openEditModal = (folder) => {
