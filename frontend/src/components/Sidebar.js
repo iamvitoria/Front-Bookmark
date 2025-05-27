@@ -6,9 +6,7 @@ export default function Sidebar({
   setSelectedFolder = [],
   selectedFolder = [],
   onEditFolder = [],
-  onDeleteFolder = [],
-  savedLinks = [],
-  onAddLinksToFolder = []
+  onDeleteFolder = []
 }) {
   const [folderName, setFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -278,10 +276,9 @@ export default function Sidebar({
   );
 }
 
-// Estilos simples para organizar visualmente
 const styles = {
   sidebar: {
-    width: '270px',
+    width: '280px',
     padding: '15px',
     borderRight: '1px solid #ccc',
     height: '100vh',
