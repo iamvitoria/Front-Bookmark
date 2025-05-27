@@ -24,7 +24,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   const [folders, setFolders] = useState([]);
 
   const [showEditFolderModal, setShowEditFolderModal] = useState(false);
-  const [editFolderData, setEditFolderData] = useState({ id: null, currentName: '' });
+  const [editFolderData, setEditFolderData] = useState({ id: null, name: '' });
 
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [deleteFolderId, setDeleteFolderId] = useState(null);
@@ -42,7 +42,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     })
       .then(res => res.json())
       .then(data => {
-        if (!data.erro) {
+        if (data.erro) {
+          alert(`Erro ao criar pasta: ${data.erro}`);
+        } else {
           setFolders(prev => [...prev, { id: data.id, name: folderName }]);
         }
       })
@@ -50,25 +52,22 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   };
 
   const handleEditFolder = (folderId, currentName) => {
-    setEditFolderData({ id: folderId, currentName });
+    setEditFolderData({ id: folderId, name: currentName });
     setShowEditFolderModal(true);
   };
 
   const confirmEditFolder = () => {
-    const { id, currentName } = editFolderData;
-    if (!currentName.trim()) return;
-
-    fetch(`${API_URL}/folders/${id}`, {
+    fetch(`${API_URL}/folders/${editFolderData.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: currentName }),
+      body: JSON.stringify({ name: editFolderData.name }),
     })
       .then(res => res.json())
       .then(() => {
-        setFolders(prev => prev.map(f => f.id === id ? { ...f, name: currentName } : f));
+        setFolders(prev => prev.map(f => f.id === editFolderData.id ? { ...f, name: editFolderData.name } : f));
+        setShowEditFolderModal(false);
       })
-      .catch(err => console.error("Erro ao editar pasta:", err))
-      .finally(() => setShowEditFolderModal(false));
+      .catch(err => console.error("Erro ao editar pasta:", err));
   };
 
   const handleDeleteFolder = (folderId) => {
@@ -77,18 +76,14 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
   };
 
   const confirmDeleteFolder = () => {
-    fetch(`${API_URL}/folders/${deleteFolderId}`, {
-      method: "DELETE",
-    })
+    fetch(`${API_URL}/folders/${deleteFolderId}`, { method: "DELETE" })
+      .then(res => res.json())
       .then(() => {
         setFolders(prev => prev.filter(f => f.id !== deleteFolderId));
         if (selectedFolder === deleteFolderId) setSelectedFolder(null);
-      })
-      .catch(err => console.error("Erro ao excluir pasta:", err))
-      .finally(() => {
         setShowDeleteFolderModal(false);
-        setDeleteFolderId(null);
-      });
+      })
+      .catch(err => console.error("Erro ao excluir pasta:", err));
   };
 
   useEffect(() => {
@@ -104,9 +99,9 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     let url = `${API_URL}/bookmarks?user_id=${user_id}`;
     if (selectedFolder) url += `&folder_id=${selectedFolder}`;
     fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        const formattedLinks = data.map((link) => ({
+      .then(res => res.json())
+      .then(data => {
+        const formattedLinks = data.map(link => ({
           id: link.id,
           title: link.titulo,
           url: link.url,
@@ -114,12 +109,10 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         }));
         setLinks(formattedLinks);
       })
-      .catch((err) => console.error("Erro ao carregar links:", err));
+      .catch(err => console.error("Erro ao carregar links:", err));
   }, [user_id, API_URL, selectedFolder]);
 
-  const filteredLinks = links.filter(
-    (link) => link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLinks = links.filter(link => link.title && link.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAddLink = async (e) => {
     e.preventDefault();
@@ -143,15 +136,13 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLinkData),
       });
-      if (!res.ok) throw new Error("Erro ao adicionar link");
       const result = await res.json();
-      const newLink = {
+      setLinks([{
         id: result.id,
         title: newTitle,
         url: newUrl,
-        description: newDescription,
-      };
-      setLinks([newLink, ...links]);
+        description: newDescription
+      }, ...links]);
       setNewTitle("");
       setNewUrl("");
       setNewDescription("");
@@ -170,7 +161,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
     e.preventDefault();
     setErro("");
     setIsSaving(true);
-    const res = await fetch(`${API_URL}/bookmarks/${editingLink.id}`, {
+    await fetch(`${API_URL}/bookmarks/${editingLink.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -179,35 +170,19 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         descricao: editingLink.descricao,
       }),
     });
-    if (res.ok) {
-      const updated = {
-        id: editingLink.id,
-        title: editingLink.titulo,
-        url: editingLink.url,
-        description: editingLink.descricao,
-      };
-      setLinks(links.map((l) => (l.id === updated.id ? updated : l)));
-      setEditingLink(null);
-    } else {
-      alert("Erro ao editar");
-    }
+    setLinks(links.map(l => (l.id === editingLink.id ? { ...l, title: editingLink.titulo, url: editingLink.url, description: editingLink.descricao } : l)));
+    setEditingLink(null);
     setIsSaving(false);
   }
 
   const handleDelete = async (id) => {
     setDeletingId(id);
-    try {
-      const res = await fetch(`${API_URL}/bookmarks/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erro ao deletar link");
-      setLinks((current) => current.filter((link) => link.id !== id));
-      setFavorites((current) => current.filter((fav) => fav.id !== id));
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setDeletingId(null);
-      setShowConfirm(false);
-      setConfirmDeleteId(null);
-    }
+    await fetch(`${API_URL}/bookmarks/${id}`, { method: "DELETE" });
+    setLinks(links.filter(link => link.id !== id));
+    setFavorites(favorites.filter(fav => fav.id !== id));
+    setDeletingId(null);
+    setShowConfirm(false);
+    setConfirmDeleteId(null);
   };
 
   const confirmDelete = (id) => {
@@ -217,11 +192,7 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
 
   return (
     <div style={styles.container}>
-      <Header
-        onSearch={setSearchTerm}
-        nomeUsuario={nomeUsuario}
-        onLogout={onLogout}
-      />
+      <Header onSearch={setSearchTerm} nomeUsuario={nomeUsuario} onLogout={onLogout} />
       <div style={styles.main}>
         <Sidebar
           favorites={favorites}
@@ -234,27 +205,21 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
         />
         <main style={styles.content}>
           <form onSubmit={handleAddLink} style={styles.form}>
-            <input type="text" placeholder="Título" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} style={styles.input} required />
-            <input type="url" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} style={styles.input} required />
-            <input type="text" placeholder="Descrição (opcional)" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} style={styles.input} />
+            <input type="text" placeholder="Título" value={newTitle} onChange={e => setNewTitle(e.target.value)} style={styles.input} required />
+            <input type="url" placeholder="URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} style={styles.input} required />
+            <input type="text" placeholder="Descrição (opcional)" value={newDescription} onChange={e => setNewDescription(e.target.value)} style={styles.input} />
             {erro && <span style={styles.erro}>{erro}</span>}
-            <button type="submit" style={styles.button} disabled={isLoading}>
-              {isLoading ? "Adicionando..." : "Adicionar Link"}
-            </button>
+            <button type="submit" style={styles.button} disabled={isLoading}>{isLoading ? "Adicionando..." : "Adicionar Link"}</button>
           </form>
 
           {editingLink && (
             <form onSubmit={salvarEdicao} style={styles.form}>
-              <input type="text" placeholder="Título" value={editingLink.titulo} onChange={(e) => setEditingLink({ ...editingLink, titulo: e.target.value })} style={styles.input} required />
-              <input type="url" placeholder="URL" value={editingLink.url} onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })} style={styles.input} required />
-              <input type="text" placeholder="Descrição" value={editingLink.descricao || ""} onChange={(e) => setEditingLink({ ...editingLink, descricao: e.target.value })} style={styles.input} />
+              <input type="text" value={editingLink.titulo} onChange={e => setEditingLink({ ...editingLink, titulo: e.target.value })} style={styles.input} required />
+              <input type="url" value={editingLink.url} onChange={e => setEditingLink({ ...editingLink, url: e.target.value })} style={styles.input} required />
+              <input type="text" value={editingLink.descricao || ""} onChange={e => setEditingLink({ ...editingLink, descricao: e.target.value })} style={styles.input} />
               {erro && <span style={styles.erro}>{erro}</span>}
-              <button type="submit" style={styles.button} disabled={isSaving}>
-                {isSaving ? "Salvando..." : "Salvar"}
-              </button>
-              <button type="button" onClick={() => setEditingLink(null)} style={{ ...styles.button, backgroundColor: "gray" }}>
-                Cancelar
-              </button>
+              <button type="submit" style={styles.button} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar"}</button>
+              <button type="button" onClick={() => setEditingLink(null)} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
             </form>
           )}
 
@@ -263,25 +228,20 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
               <div style={styles.modal}>
                 <p>Tem certeza que deseja excluir este link?</p>
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                  <button onClick={() => handleDelete(confirmDeleteId)} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>
-                    {deletingId === confirmDeleteId ? "Excluindo..." : "Sim, excluir"}
-                  </button>
-                  <button onClick={() => { setShowConfirm(false); setConfirmDeleteId(null); }} style={{ ...styles.button, backgroundColor: "gray" }}>
-                    Cancelar
-                  </button>
+                  <button onClick={() => handleDelete(confirmDeleteId)} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>{deletingId === confirmDeleteId ? "Excluindo..." : "Sim, excluir"}</button>
+                  <button onClick={() => { setShowConfirm(false); setConfirmDeleteId(null); }} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
                 </div>
               </div>
             </div>
           )}
 
-          <LinkList links={filteredLinks} onEdit={handleEdit} onDelete={confirmDelete} grid />
-
+          {/* Modal Edit Folder */}
           {showEditFolderModal && (
             <div style={styles.modalOverlay}>
               <div style={styles.modal}>
-                <p>Editar nome da pasta:</p>
-                <input type="text" value={editFolderData.currentName} onChange={(e) => setEditFolderData({ ...editFolderData, currentName: e.target.value })} style={styles.input} />
-                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                <h3>Editar Pasta</h3>
+                <input type="text" value={editFolderData.name} onChange={(e) => setEditFolderData({ ...editFolderData, name: e.target.value })} style={styles.input} />
+                <div style={{ marginTop: '10px' }}>
                   <button onClick={confirmEditFolder} style={styles.button}>Salvar</button>
                   <button onClick={() => setShowEditFolderModal(false)} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
                 </div>
@@ -289,18 +249,20 @@ export default function Dashboard({ nomeUsuario, onLogout }) {
             </div>
           )}
 
+          {/* Modal Delete Folder */}
           {showDeleteFolderModal && (
             <div style={styles.modalOverlay}>
               <div style={styles.modal}>
                 <p>Tem certeza que deseja excluir esta pasta?</p>
-                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                  <button onClick={confirmDeleteFolder} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>Excluir</button>
+                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                  <button onClick={confirmDeleteFolder} style={{ ...styles.button, backgroundColor: "#2c3e50" }}>Sim, excluir</button>
                   <button onClick={() => setShowDeleteFolderModal(false)} style={{ ...styles.button, backgroundColor: "gray" }}>Cancelar</button>
                 </div>
               </div>
             </div>
           )}
 
+          <LinkList links={filteredLinks} onEdit={handleEdit} onDelete={confirmDelete} grid />
         </main>
       </div>
     </div>

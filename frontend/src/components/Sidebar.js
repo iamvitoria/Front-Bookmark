@@ -46,8 +46,21 @@ export default function Sidebar({
 
   const handleConfirmDelete = () => {
     if (deleteFolderId) {
-      onDeleteFolder(deleteFolderId);
-      closeDeleteModal();
+      fetch(`${API_URL}/folders/${deleteFolderId}`, {
+        method: 'DELETE',
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Erro ao excluir pasta');
+          return res.json();
+        })
+        .then(() => {
+          onDeleteFolder(deleteFolderId);
+          closeDeleteModal();
+        })
+        .catch(err => {
+          console.error('Erro ao excluir pasta:', err);
+          alert('Erro ao excluir pasta');
+        });
     }
   };
 
@@ -66,10 +79,26 @@ export default function Sidebar({
 
   const handleSaveEdit = () => {
     if (editFolderName.trim() !== '') {
-      onEditFolder(editFolderId, editFolderName.trim());
-      closeEditModal();
+      fetch(`${API_URL}/folders/${editFolderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editFolderName.trim() }),
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Erro ao editar pasta');
+          return res.json();
+        })
+        .then(() => {
+          onEditFolder(editFolderId, editFolderName.trim());
+          closeEditModal();
+        })
+        .catch(err => {
+          console.error('Erro ao editar pasta:', err);
+          alert('Erro ao editar pasta');
+        });
     }
   };
+
 
   // Toggle menu vertical (três pontos)
   const toggleMenu = (folderId) => {
